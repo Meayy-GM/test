@@ -8,12 +8,12 @@ st.set_page_config(page_title="タイトル", layout="wide")
 st.title('伊藤')
 
 # テキスト入力ボックスを作成し、ユーザーからの入力を受け取る
-user_input = st.text_input('あなたの名前を入力してください')
+user_input = st.text_input('あなたのなまえを入力してください')
 
 # ボタンを作成し、クリックされたらメッセージを表示
 if st.button('挨拶する'):
     if user_input:  # 名前が入力されているかチェック
-        st.success(f'🌟 こんにちは、{user_input}さん! 🌟')  # メッセージをハイライト
+        st.success(f'🌟 やっほー、{user_input}さん! 🌟')  # メッセージをハイライト
     else:
         st.error('名前を入力してください。')  # エラーメッセージを表示
 
