@@ -37,5 +37,5 @@ max_val = st.number_input('最大値を入力してください', value=10)
 #乱数生成ボタンを配置
 if st.button('乱数を生成'):
     # 最小値と最大値の間で乱数を生成
-    random_num = random.randist(min_val, max_val)
+    random_num = random_num.randist(min_val, max_val)
     st.write(f'生成された乱数: {random_num}')
