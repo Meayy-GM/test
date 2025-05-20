@@ -1,42 +1,31 @@
-# Streamlitライブラリをインポート
 import streamlit as st
 import random
 
-# ページ設定（タブに表示されるタイトル、表示幅）
-st.set_page_config(page_title="タイトル", layout="wide")
+# タイトル
+st.title("じゃんけんゲーム ✊✌️🖐")
 
-# タイトルを設定
-st.title('伊藤')
+# ユーザーの手を選ぶ
+user_choice = st.radio("あなたの手を選んでください：", ("グー", "チョキ", "パー"))
 
-# テキスト入力ボックスを作成し、ユーザーからの入力を受け取る
-user_input = st.text_input('あなたのなまえを入力してください')
+# 対戦ボタン
+if st.button("じゃんけん！"):
+    # コンピュータの手をランダムに選ぶ
+    choices = ["グー", "チョキ", "パー"]
+    computer_choice = random.choice(choices)
 
-# ボタンを作成し、クリックされたらメッセージを表示
-if st.button('挨拶する'):
-    if user_input:  # 名前が入力されているかチェック
-        st.success(f'🌟 やっほー、{user_input}さん! 🌟')  # メッセージをハイライト
+    # 勝敗判定
+    if user_choice == computer_choice:
+        result = "あいこです！"
+    elif (user_choice == "グー" and computer_choice == "チョキ") or \
+         (user_choice == "チョキ" and computer_choice == "パー") or \
+         (user_choice == "パー" and computer_choice == "グー"):
+        result = "あなたの勝ち！🎉"
     else:
-        st.error('名前を入力してください。')  # エラーメッセージを表示
+        result = "あなたの負け...😢"
 
-# スライダーを作成し、値を選択
-number = st.slider('好きな数字（10進数）を選んでください', 0, 100)
-
-# 補足メッセージ
-st.caption("十字キー（左右）でも調整できます。")
-
-# 選択した数字を表示
-st.write(f'あなたが選んだ数字は「{number}」です。')
-
-# 選択した数値を2進数に変換
-binary_representation = bin(number)[2:]  # 'bin'関数で2進数に変換し、先頭の'0b'を取り除く
-st.info(f'🔢 10進数の「{number}」を2進数で表現すると「{binary_representation}」になります。 🔢')  # 2進数の表示をハイライト
-
-#最小値と最大値の入力を受け取る
-min_val = st.number_input('最小値を入力してください', value=0)
-max_val = st.number_input('最大値を入力してください', value=10)
-
-#乱数生成ボタンを配置
-if st.button('乱数を生成'):
-    # 最小値と最大値の間で乱数を生成
-    random_num = random.randist(min_val, max_val)
-    st.write(f'生成された乱数: {random_num}')
+    # 結果表示
+    st.subheader("結果")
+    st.write(f"あなたの手：{user_choice}")
+    st.write(f"コンピュータの手：{computer_choice}")
+    st.success(result)
+ 
