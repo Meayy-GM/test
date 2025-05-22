@@ -8,3 +8,4 @@ user_name = st.text_input("名前を入力してください")
 
 st.header("あなたの名前は"+str(user_name)+"です")
 
+h = st.text_input("身長を入力してください(ｍ)",value=1.70)
