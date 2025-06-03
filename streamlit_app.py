@@ -54,5 +54,22 @@ elif mode == "クイズに挑戦":
             else:
                 st.error(f"不正解！正しい答えは: {question['meaning']}")
 
+import json
+import pandas as pd
+
+# サンプル単語データ（正答率トラッキング付き）
+word_data = [
+    {"word": "Algorithm", "meaning": "アルゴリズム", "correct": 3, "wrong": 2},
+    {"word": "Database", "meaning": "データベース", "correct": 1, "wrong": 4},
+    {"word": "Encryption", "meaning": "暗号化", "correct": 5, "wrong": 0},
+]
+
+# JSONにエクスポート
+with open("words.json", "w", encoding="utf-8") as f:
+    json.dump(word_data, f, indent=4, ensure_ascii=False)
+
+# CSVにエクスポート（pandas使用）
+df = pd.DataFrame(word_data)
+df.to_csv("words.csv", index=False, encoding="utf-8-sig")
 
 
