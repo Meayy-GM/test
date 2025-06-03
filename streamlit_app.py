@@ -1,81 +1,106 @@
 import streamlit as st
 import random
 
-st.title("英単語クイズアプリ")
+# 単語リストと辞書をセッションステートで管理
+if "words_to_learn" not in st.session_state:
+    st.session_state.words_to_learn = []
 
-# セッションステートに単語リストを保存
-if 'word_list' not in st.session_state:
-    st.session_state.word_list = []
+if "word_dict" not in st.session_state:
+    st.session_state.word_dict = {}
 
-# モード選択（登録 or クイズ）
-mode = st.sidebar.radio("モードを選んでください", ["単語を登録する", "クイズに挑戦"])
+if "incorrect_words" not in st.session_state:
+    st.session_state.incorrect_words = []
 
-# ----------------------
-# 単語登録モード
-# ----------------------
-if mode == "単語を登録する":
-    st.header("単語を登録")
+# 1. 単語を入力するフォーム
+def input_words():
+    st.title("英単語学習アプリ")
+    st.write("覚えたい英単語とその意味を入力してください。")
 
-    with st.form(key="word_form"):
-        word = st.text_input("英単語を入力:")
-        meaning = st.text_input("日本語の意味を入力:")
-        submit = st.form_submit_button("登録する")
+    with st.form(key='word_form'):
+        word = st.text_input("英単語")
+        meaning = st.text_input("意味")
+        submit_button = st.form_submit_button(label="単語を追加")
 
-        if submit:
-            if word and meaning:
-                st.session_state.word_list.append({"word": word, "meaning": meaning})
-                st.success(f"単語 '{word}' を登録しました！")
+    if submit_button:
+        if word and meaning:
+            if word not in st.session_state.words_to_learn:
+                st.session_state.words_to_learn.append(word)
+                st.session_state.word_dict[word] = meaning
+                st.success(f"単語「{word}」が追加されました。")
             else:
-                st.error("両方のフィールドに入力してください。")
+                st.warning("この単語はすでにリストにあります。")
+        else:
+            st.error("単語と意味を両方入力してください。")
 
-    # 現在の登録単語の一覧表示
-    if st.session_state.word_list:
-        st.subheader("登録済みの単語一覧")
-        for idx, entry in enumerate(st.session_state.word_list):
-            st.write(f"{idx+1}. {entry['word']} - {entry['meaning']}")
+# 2. クイズを出題する関数
+def quiz():
+    st.title("英単語クイズ")
 
-# ----------------------
-# クイズモード
-# ----------------------
-elif mode == "クイズに挑戦":
-    st.header("クイズに挑戦！")
+    if not st.session_state.words_to_learn:
+        st.warning("まず、覚えたい単語を入力してください。")
+        return
 
-    if not st.session_state.word_list:
-        st.warning("まず単語を登録してください。")
+    # 間違えた単語があれば優先的に出題
+    if st.session_state.incorrect_words:
+        word_to_ask = random.choice(st.session_state.incorrect_words)
     else:
-        # ランダムに1つ出題
-        question = random.choice(st.session_state.word_list)
-        st.subheader(f"英単語: **{question['word']}** の意味は？")
+        word_to_ask = random.choice(st.session_state.words_to_learn)
 
-        user_answer = st.text_input("あなたの答え（日本語）を入力:")
-        if st.button("答え合わせ"):
-            if user_answer.strip() == question["meaning"]:
-                st.success("正解！")
-            else:
-                st.error(f"不正解！正しい答えは: {question['meaning']}")
+    meaning = st.session_state.word_dict[word_to_ask]
 
-import json
-import pandas as pd
+    st.write(f"この英単語の意味は何ですか？: **{word_to_ask}**")
+    answer = st.text_input("意味を入力してください:", key="quiz_answer")
 
-# サンプル単語データ（正答率トラッキング付き）
-word_data = [
-    {"word": "Algorithm", "meaning": "アルゴリズム", "correct": 3, "wrong": 2},
-    {"word": "Database", "meaning": "データベース", "correct": 1, "wrong": 4},
-    {"word": "Encryption", "meaning": "暗号化", "correct": 5, "wrong": 0},
-]
+    if answer:
+        if answer.strip().lower() == meaning.strip().lower():
+            st.success("正解！")
+            if word_to_ask in st.session_state.incorrect_words:
+                st.session_state.incorrect_words.remove(word_to_ask)
+            # 入力クリアのために再読み込みする小ワザ
+            st.experimental_rerun()
+        else:
+            st.error(f"不正解。正しい意味は「{meaning}」です。")
+            if word_to_ask not in st.session_state.incorrect_words:
+                st.session_state.incorrect_words.append(word_to_ask)
+            st.experimental_rerun()
 
-# JSONにエクスポート
-with open("words.json", "w", encoding="utf-8") as f:
-    json.dump(word_data, f, indent=4, ensure_ascii=False)
+# 3. 進捗ダッシュボード
+def progress_dashboard():
+    st.title("進捗ダッシュボード")
 
-# CSVにエクスポート（pandas使用）
-df = pd.DataFrame(word_data)
-df.to_csv("words.csv", index=False, encoding="utf-8-sig")
+    total = len(st.session_state.words_to_learn)
+    incorrect = len(st.session_state.incorrect_words)
+    learned = total - incorrect
 
-# JSON読み込み
-with open("words.json", "r", encoding="utf-8") as f:
-    loaded_data = json.load(f)
+    st.metric("覚えた単語数", learned)
+    st.metric("覚えていない単語数", incorrect)
+    st.metric("単語総数", total)
 
-# CSV読み込み（pandas使用）
-df_loaded = pd.read_csv("words.csv")
+    if total > 0:
+        progress = (learned / total) * 100
+        st.progress(progress)
+        st.write(f"進捗率: {progress:.1f}%")
+
+    if incorrect > 0:
+        st.subheader("間違えた単語リスト")
+        for w in st.session_state.incorrect_words:
+            st.write(f"- **{w}** : {st.session_state.word_dict[w]}")
+
+    else:
+        st.write("全ての単語を覚えました！おめでとうございます！🎉")
+
+# 4. メイン画面
+def main():
+    st.sidebar.title("メニュー")
+    option = st.sidebar.radio("選択してください", ("単語入力", "クイズ", "進捗ダッシュボード"))
+
+    if option == "単語入力":
+        input_words()
+    elif option == "クイズ":
+        quiz()
+    elif option == "進捗ダッシュボード":
+        progress_dashboard()
+
+if __name__ == "__main__":
+    main()
 
