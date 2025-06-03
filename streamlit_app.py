@@ -72,4 +72,10 @@ with open("words.json", "w", encoding="utf-8") as f:
 df = pd.DataFrame(word_data)
 df.to_csv("words.csv", index=False, encoding="utf-8-sig")
 
+# JSON読み込み
+with open("words.json", "r", encoding="utf-8") as f:
+    loaded_data = json.load(f)
+
+# CSV読み込み（pandas使用）
+df_loaded = pd.read_csv("words.csv")
 
