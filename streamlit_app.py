@@ -1,106 +1,98 @@
 import streamlit as st
 import random
 
-# 単語リストと辞書をセッションステートで管理
-if "words_to_learn" not in st.session_state:
-    st.session_state.words_to_learn = []
+st.set_page_config(page_title="英単語クイズアプリ", layout="centered")
 
+st.title("📘 英単語クイズアプリ")
+
+# ---------------------------
+# 初期化
+# ---------------------------
 if "word_dict" not in st.session_state:
     st.session_state.word_dict = {}
 
-if "incorrect_words" not in st.session_state:
-    st.session_state.incorrect_words = []
+if "score" not in st.session_state:
+    st.session_state.score = {"correct": 0, "total": 0}
 
-# 1. 単語を入力するフォーム
-def input_words():
-    st.title("英単語学習アプリ")
-    st.write("覚えたい英単語とその意味を入力してください。")
+# ---------------------------
+# 出題方向の選択
+# ---------------------------
+st.sidebar.header("⚙️ 設定")
+quiz_mode = st.sidebar.radio("出題形式", ["意味 → 英単語", "英単語 → 意味"])
 
-    with st.form(key='word_form'):
-        word = st.text_input("英単語")
-        meaning = st.text_input("意味")
-        submit_button = st.form_submit_button(label="単語を追加")
+# ---------------------------
+# 単語入力
+# ---------------------------
+st.subheader("✍️ 英単語と意味の登録")
+input_text = st.text_area("英単語,意味 の形式で1行ずつ入力してください（例：apple,りんご）", height=150)
 
-    if submit_button:
-        if word and meaning:
-            if word not in st.session_state.words_to_learn:
-                st.session_state.words_to_learn.append(word)
-                st.session_state.word_dict[word] = meaning
-                st.success(f"単語「{word}」が追加されました。")
-            else:
-                st.warning("この単語はすでにリストにあります。")
-        else:
-            st.error("単語と意味を両方入力してください。")
-
-# 2. クイズを出題する関数
-def quiz():
-    st.title("英単語クイズ")
-
-    if not st.session_state.words_to_learn:
-        st.warning("まず、覚えたい単語を入力してください。")
-        return
-
-    # 間違えた単語があれば優先的に出題
-    if st.session_state.incorrect_words:
-        word_to_ask = random.choice(st.session_state.incorrect_words)
+if st.button("単語を保存"):
+    if input_text.strip():
+        lines = input_text.strip().split('\n')
+        for line in lines:
+            if ',' in line:
+                word, meaning = line.split(',', 1)
+                st.session_state.word_dict[word.strip()] = meaning.strip()
+        st.success("単語を保存しました！")
     else:
-        word_to_ask = random.choice(st.session_state.words_to_learn)
+        st.warning("入力が空です。")
 
-    meaning = st.session_state.word_dict[word_to_ask]
+# ---------------------------
+# 単語がある場合はクイズを表示
+# ---------------------------
+if st.session_state.word_dict:
+    st.subheader("🧠 クイズに挑戦！")
 
-    st.write(f"この英単語の意味は何ですか？: **{word_to_ask}**")
-    answer = st.text_input("意味を入力してください:", key="quiz_answer")
+    word_dict = st.session_state.word_dict
+    correct_word, correct_meaning = random.choice(list(word_dict.items()))
+    num_options = min(4, len(word_dict))
 
-    if answer:
-        if answer.strip().lower() == meaning.strip().lower():
-            st.success("正解！")
-            if word_to_ask in st.session_state.incorrect_words:
-                st.session_state.incorrect_words.remove(word_to_ask)
-            # 入力クリアのために再読み込みする小ワザ
-            st.experimental_rerun()
-        else:
-            st.error(f"不正解。正しい意味は「{meaning}」です。")
-            if word_to_ask not in st.session_state.incorrect_words:
-                st.session_state.incorrect_words.append(word_to_ask)
-            st.experimental_rerun()
-
-# 3. 進捗ダッシュボード
-def progress_dashboard():
-    st.title("進捗ダッシュボード")
-
-    total = len(st.session_state.words_to_learn)
-    incorrect = len(st.session_state.incorrect_words)
-    learned = total - incorrect
-
-    st.metric("覚えた単語数", learned)
-    st.metric("覚えていない単語数", incorrect)
-    st.metric("単語総数", total)
-
-    if total > 0:
-        progress = (learned / total) * 100
-        st.progress(progress)
-        st.write(f"進捗率: {progress:.1f}%")
-
-    if incorrect > 0:
-        st.subheader("間違えた単語リスト")
-        for w in st.session_state.incorrect_words:
-            st.write(f"- **{w}** : {st.session_state.word_dict[w]}")
+    # 選択肢作成
+    if quiz_mode == "意味 → 英単語":
+        all_words = list(word_dict.keys())
+        all_words.remove(correct_word)
+        choices = random.sample(all_words, num_options - 1) + [correct_word]
+        random.shuffle(choices)
+        st.write(f"次の意味に合う英単語はどれ？：**{correct_meaning}**")
+        selected = st.radio("選択肢", choices)
+        correct_answer = correct_word
 
     else:
-        st.write("全ての単語を覚えました！おめでとうございます！🎉")
+        all_meanings = list(word_dict.values())
+        all_meanings.remove(correct_meaning)
+        choices = random.sample(all_meanings, num_options - 1) + [correct_meaning]
+        random.shuffle(choices)
+        st.write(f"次の英単語の意味はどれ？：**{correct_word}**")
+        selected = st.radio("選択肢", choices)
+        correct_answer = correct_meaning
 
-# 4. メイン画面
-def main():
-    st.sidebar.title("メニュー")
-    option = st.sidebar.radio("選択してください", ("単語入力", "クイズ", "進捗ダッシュボード"))
+    if st.button("回答する"):
+        st.session_state.score["total"] += 1
+        if selected == correct_answer:
+            st.session_state.score["correct"] += 1
+            st.success("🎉 正解！")
+        else:
+            st.error(f"😢 不正解。正解は **{correct_answer}** です。")
 
-    if option == "単語入力":
-        input_words()
-    elif option == "クイズ":
-        quiz()
-    elif option == "進捗ダッシュボード":
-        progress_dashboard()
+# ---------------------------
+# スコア表示とリセット
+# ---------------------------
+st.sidebar.markdown("---")
+st.sidebar.header("📊 スコア")
 
-if __name__ == "__main__":
-    main()
+correct = st.session_state.score["correct"]
+total = st.session_state.score["total"]
+accuracy = (correct / total * 100) if total > 0 else 0
+st.sidebar.write(f"✅ 正解数: {correct}")
+st.sidebar.write(f"📈 出題数: {total}")
+st.sidebar.write(f"🎯 正答率: {accuracy:.1f}%")
+
+if st.sidebar.button("🔄 スコアをリセット"):
+    st.session_state.score = {"correct": 0, "total": 0}
+    st.success("スコアをリセットしました。")
+
+if st.sidebar.button("🗑 単語をすべて削除"):
+    st.session_state.word_dict = {}
+    st.success("単語リストをすべて削除しました。")
+
 
