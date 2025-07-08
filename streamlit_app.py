@@ -66,7 +66,7 @@ if st.session_state.word_dict:
         selected = st.radio("選択肢", choices)
         correct_answer = correct_meaning
 
-    if st.button("回答する"):
+    if st.button("選択肢"):
         st.session_state.score["total"] += 1
         if selected == correct_answer:
             st.session_state.score["correct"] += 1
