@@ -46,34 +46,48 @@ if st.session_state.long_texts:
             with st.expander(f"フレーズ {i+1}"):
                 st.markdown(f"**{phrase}**")
 
-    # ✏️ 穴埋めクイズ
-    elif mode == "✏️ 穴埋め長文クイズ":
-        st.subheader("📝 穴埋め長文クイズ")
-        words = selected_text.split()
-        num_blanks = max(1, len(words) // 8)  # 長さに応じて空欄数調整
-        blank_indices = random.sample(range(len(words)), num_blanks)
-        answers = {i: words[i] for i in blank_indices}
+    # ✏️ 穴埋めクイズ（番号付き空白）
+elif mode == "✏️ 穴埋め長文クイズ":
+    st.subheader("📝 穴埋め長文クイズ")
+    words = selected_text.split()
+    num_blanks = max(1, len(words) // 8)
+    blank_indices = random.sample(range(len(words)), num_blanks)
+    answers = {}
+    index_map = {}
 
-        quiz_text = " ".join("_____" if i in blank_indices else word for i, word in enumerate(words))
-        st.markdown("**次の長文の空欄を埋めてください：**")
-        st.write(quiz_text)
+    # 空欄番号をつけて置換
+    quiz_words = []
+    for i, word in enumerate(words):
+        if i in blank_indices:
+            blank_number = len(answers) + 1
+            answers[blank_number] = word
+            index_map[i] = blank_number
+            quiz_words.append(f"[{blank_number}]_____")
+        else:
+            quiz_words.append(word)
 
-        user_answers = {}
-        for idx in blank_indices:
-            user_answers[idx] = st.text_input(f"空欄「{idx+1}番目の単語」", key=f"blank_{idx}")
+    st.markdown("**次の長文の空欄を埋めてください：**")
+    st.write(" ".join(quiz_words))
 
-        if st.button("✅ 答え合わせ"):
-            correct = 0
-            for idx in blank_indices:
-                if user_answers[idx].strip().lower() == answers[idx].lower():
-                    correct += 1
-            st.info(f"{len(blank_indices)} 問中 {correct} 問正解！")
-            if correct == len(blank_indices):
-                st.success("完璧です！✨")
-            else:
-                for idx in blank_indices:
-                    if user_answers[idx].strip().lower() != answers[idx].lower():
-                        st.error(f"❌ {idx+1}番目の単語：正解は「{answers[idx]}」")
+    user_answers = {}
+    for num in sorted(answers.keys()):
+        user_answers[num] = st.text_input(f"空欄 [{num}] の単語", key=f"blank_{num}")
+
+    if st.button("✅ 答え合わせ"):
+        correct = 0
+        for num, correct_word in answers.items():
+            if user_answers[num].strip().lower() == correct_word.lower():
+                correct += 1
+
+        st.info(f"{len(answers)} 問中 {correct} 問正解！")
+
+        if correct == len(answers):
+            st.success("すばらしい！全部正解です 🎉")
+        else:
+            for num, correct_word in answers.items():
+                if user_answers[num].strip().lower() != correct_word.lower():
+                    st.error(f"❌ 空欄 [{num}]：正解は「{correct_word}」です。")
+
 
     # 📖 全文シャドーイング（将来拡張用）
     elif mode == "📖 全文シャドーイング":
