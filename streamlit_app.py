@@ -43,4 +43,4 @@ if user_text.strip():
         with st.expander("✏️ 修正後の文章を表示"):
             st.code(corrected, language='markdown')
 else:
-    st.info("⬅ 左のテキストボックスに英語の文を入力してください。")
+    st.info("⬅ 上のテキストボックスに英語の文を入力してください。")
