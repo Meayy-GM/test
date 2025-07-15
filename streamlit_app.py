@@ -1,43 +1,46 @@
 import streamlit as st
 import language_tool_python
+import pandas as pd
 
-st.title("📝 英文文法チェッカー")
+st.set_page_config(page_title="Grammar Checker", layout="wide")
+st.title("🔎 リアルタイム英文法チェッカー")
+
+st.markdown("""
+英語の文章を入力すると、リアルタイムで文法・スペルミスを検出して一覧表示します。  
+LanguageTool を使用して分析しています。
+""")
 
 user_text = st.text_area(
-    "英文を入力してください", 
+    "英文を入力してください：", 
     height=200, 
-    placeholder="ここに英語の長文を入力してください..."
+    placeholder="ここに英文を入力すると、すぐにチェック結果が表示されます。"
 )
 
-if st.button("文法チェック"):
-    if not user_text.strip():
-        st.warning("文章を入力してください。")
+# 入力がある場合のみ処理
+if user_text.strip():
+    tool = language_tool_python.LanguageTool('en-US')
+    matches = tool.check(user_text)
+
+    if not matches:
+        st.success("✅ 文法ミスは見つかりませんでした。")
     else:
-        # LanguageToolの英語用インスタンス作成
-        tool = language_tool_python.LanguageTool('en-US')
+        st.warning(f"🚨 {len(matches)} 件の文法・スペルミスが見つかりました。")
 
-        # チェック実行
-        matches = tool.check(user_text)
+        # 表示用データの作成
+        issues = []
+        for match in matches:
+            issues.append({
+                "エラー箇所": user_text[match.offset : match.offset + match.errorLength],
+                "理由": match.message,
+                "提案": ", ".join(match.replacements) if match.replacements else "（提案なし）"
+            })
 
-        if not matches:
-            st.success("🎉 文法ミスは見つかりませんでした！")
-        else:
-            st.write(f"🔍 **{len(matches)} 件の文法・スペルの問題を検出しました。**")
+        df = pd.DataFrame(issues)
+        st.dataframe(df, use_container_width=True)
 
-            for i, match in enumerate(matches, 1):
-                # 問題のある文章の箇所を切り出し
-                error_text = user_text[match.offset : match.offset + match.errorLength]
-
-                st.markdown(f"""
-                ### {i}. 問題のある文節
-                > `{error_text}`
-
-                **理由:** {match.message}  
-                **提案される修正案:** {", ".join(match.replacements) if match.replacements else "（提案なし）"}
-                ---
-                """)
-
-        # 修正後の文章を表示
-        corrected_text = language_tool_python.utils.correct(user_text, matches)
-        st.subheader("✏️ 修正後の文章")
-        st.code(corrected_text)
+        # 修正済み文章を折りたたみ表示
+        corrected = language_tool_python.utils.correct(user_text, matches)
+        with st.expander("✏️ 修正後の文章を表示"):
+            st.code(corrected, language='markdown')
+else:
+    st.info("⬅ 左のテキストボックスに英語の文を入力してください。")
