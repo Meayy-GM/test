@@ -32,7 +32,7 @@ if st.button("💾 保存"):
 if st.session_state.long_texts:
     st.header("2. 学習メニューを選択")
 
-    mode = st.radio("学習モードを選択", ["📚 フレーズ分割", "✏️ 穴埋め長文クイズ", "📖 全文シャドーイング"])
+    mode = st.radio("学習モードを選択", ["📚 フレーズ分割", "✏️ 穴埋め長文クイズ"])
 
     selected_text = st.session_state.long_texts[st.session_state.current_index]
 
@@ -98,15 +98,6 @@ if st.session_state.long_texts:
                 for num, correct_word in answers.items():
                     if user_answers[num].strip().lower() != correct_word.lower():
                         st.error(f"❌ 空欄 [{num}]：正解は「{correct_word}」")
-
-    # -----------------------------
-    # 📖 全文シャドーイング（読み上げ準備用）
-    # -----------------------------
-    elif mode == "📖 全文シャドーイング":
-        st.subheader("🎧 シャドーイング練習（音読）")
-        st.markdown("**以下の文章を声に出して読んで練習しましょう。**")
-        st.markdown(f"### {selected_text}")
-        st.markdown("※ 今後、音声読み上げ（TTS）を追加することもできます。")
 
 
 
