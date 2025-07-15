@@ -37,4 +37,7 @@ if st.button("文法チェック"):
                 ---
                 """)
 
-        # 修正後の文章
+        # 修正後の文章を表示
+        corrected_text = language_tool_python.utils.correct(user_text, matches)
+        st.subheader("✏️ 修正後の文章")
+        st.code(corrected_text)
