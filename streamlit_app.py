@@ -16,9 +16,14 @@ user_text = st.text_area(
     placeholder="ここに英文を入力すると、すぐにチェック結果が表示されます。"
 )
 
-# 入力がある場合のみ処理
+# LanguageToolのインスタンスを一度だけ作成
+@st.cache_resource
+def get_tool():
+    return language_tool_python.LanguageTool('en-US')
+
+tool = get_tool()
+
 if user_text.strip():
-    tool = language_tool_python.LanguageTool('en-US')
     matches = tool.check(user_text)
 
     if not matches:
@@ -39,8 +44,16 @@ if user_text.strip():
         st.dataframe(df, use_container_width=True)
 
         # 修正済み文章を折りたたみ表示
-        corrected = language_tool_python.utils.correct(user_text, matches)
+        # utils.correct がない場合は、自分で修正関数を実装するか、別の手法にする
+        try:
+            from language_tool_python.utils import correct
+            corrected = correct(user_text, matches)
+        except ImportError:
+            # utils.correct が無い場合の簡易対応：tool.correct() を使用
+            corrected = tool.correct(user_text)
+
         with st.expander("✏️ 修正後の文章を表示"):
             st.code(corrected, language='markdown')
+
 else:
     st.info("⬅ 上のテキストボックスに英語の文を入力してください。")
