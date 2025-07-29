@@ -4,10 +4,10 @@ from textblob import TextBlob
 import re
 
 st.set_page_config(page_title="Grammar Checker", layout="wide")
-st.title("🔎 リアルタイム英文法チェッカー")
+st.title("🔎 リアルタイムスペルミスチェッカー")
 
 st.markdown("""
-英語の文章を入力すると、リアルタイムで文法・スペルミスを検出して一覧表示します。  
+英語の文章を入力すると、リアルタイムでスペルミスを検出して一覧表示します。  
 TextBlob を使用して分析しています。
 """)
 
